@@ -1,0 +1,190 @@
+
+<!DOCTYPE html>
+<html lang="ne">
+<head>
+  <meta charset="UTF-8">
+  <title>नेपाली SEO उपकरण | आवाजबाट खोजशब्द</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f5f5f5;
+      color: #333;
+      transition: background 0.3s, color 0.3s;
+    }
+    .dark-mode {
+      background-color: #121212;
+      color: #f5f5f5;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    button {
+      padding: 10px 16px;
+      margin: 5px;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+      background-color: #007BFF;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    textarea {
+      width: 100%;
+      height: 100px;
+      font-size: 16px;
+      padding: 10px;
+      border-radius: 5px;
+      margin-top: 10px;
+    }
+    table {
+      width: 100%;
+      margin-top: 20px;
+      border-collapse: collapse;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+    }
+    th {
+      background-color: #f0f0f0;
+    }
+    .dark-mode th {
+      background-color: #222;
+    }
+    td.copyable:hover {
+      background-color: #e0f7fa;
+    }
+    @media (max-width: 600px) {
+      button { width: 100%; margin-top: 10px; }
+    }
+    .note {
+      background: #fff3cd;
+      padding: 10px;
+      border-radius: 5px;
+      margin-bottom: 15px;
+      border: 1px solid #ffeeba;
+      color: #856404;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h2>🎙️ नेपाली SEO उपकरण</h2>
+    <button onclick="toggleDarkMode()">🌓 रङ मोड परिवर्तन गर्नुहोस्</button>
+  </header>
+
+  <div class="note">💡 यदि तपाईं अंग्रेजीमा अनुवाद गर्न चाहनुहुन्छ भने, ब्राउजरको अनुवाद सुविधा प्रयोग गर्नुहोस्।</div>
+
+  <button onclick="startListening()">🎤 बोल्न सुरु गर्नुहोस्</button>
+  <textarea id="transcript" placeholder="यहाँ बोल्नुहोस् वा टाइप गर्नुहोस्..."></textarea>
+  <button onclick="generateKeywords()">🔍 १०० कीवर्डहरू बनाउनुहोस्</button>
+  <button onclick="copyAllKeywords()">📋 सबै प्रतिलिपि गर्नुहोस्</button>
+  <button onclick="exportToCSV()">📥 CSV डाउनलोड गर्नुहोस्</button>
+
+  <table id="keywordTable">
+    <thead>
+      <tr>
+        <th>🔑 कीवर्ड</th>
+        <th>🔍 खोज संख्या</th>
+        <th>⚔️ कठिनाई</th>
+        <th>💰 CPC ($)</th>
+        <th>📋 प्रतिलिपि</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    let recognition;
+    if ('webkitSpeechRecognition' in window) {
+      recognition = new webkitSpeechRecognition();
+      recognition.lang = 'ne-NP';
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.onresult = function(event) {
+        const text = event.results[0][0].transcript;
+        document.getElementById('transcript').value = text;
+        generateKeywords();
+      };
+    }
+
+    function startListening() {
+      if (recognition) {
+        document.getElementById('transcript').value = "🎧 सुन्दैछौं...";
+        recognition.start();
+      } else {
+        alert("यो ब्राउजरले आवाज मान्यता समर्थन गर्दैन।");
+      }
+    }
+
+    function generateKeywords() {
+      const input = document.getElementById("transcript").value.trim();
+      const baseWords = input.split(/\s+/).filter(w => w.length > 2);
+      const tbody = document.querySelector("#keywordTable tbody");
+      tbody.innerHTML = "";
+
+      for (let i = 0; i < 100; i++) {
+        const word = baseWords[i % baseWords.length] || "शब्द";
+        const keyword = `नेपाली ${word} ${i + 1}`;
+        const volume = Math.floor(Math.random() * 10000) + 100;
+        const diff = ["सजिलो", "मध्यम", "गाह्रो"][Math.floor(Math.random() * 3)];
+        const cpc = (Math.random() * 1.5 + 0.1).toFixed(2);
+
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td class="copyable">${keyword}</td>
+          <td>${volume}</td>
+          <td>${diff}</td>
+          <td>$${cpc}</td>
+          <td><button onclick="copyText('${keyword}')">📋</button></td>
+        `;
+        tbody.appendChild(row);
+      }
+    }
+
+    function copyText(text) {
+      navigator.clipboard.writeText(text);
+      alert("✅ प्रतिलिपि गरियो: " + text);
+    }
+
+    function copyAllKeywords() {
+      const text = Array.from(document.querySelectorAll("tbody td:first-child"))
+        .map(td => td.textContent)
+        .join(", ");
+      navigator.clipboard.writeText(text);
+      alert("✅ सबै कीवर्डहरू प्रतिलिपि गरियो!");
+    }
+
+    function exportToCSV() {
+      const rows = document.querySelectorAll("table tr");
+      let csv = "";
+      rows.forEach(row => {
+        const cols = row.querySelectorAll("td, th");
+        const line = Array.from(cols).map(col => `"${col.innerText}"`).join(",");
+        csv += line + "\n";
+      });
+      const blob = new Blob([csv], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "keywords_nepali.csv";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+
+    function toggleDarkMode() {
+      document.body.classList.toggle("dark-mode");
+    }
+  </script>
+</body>
+</html>
